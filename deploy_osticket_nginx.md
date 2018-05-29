@@ -114,8 +114,8 @@ tìm đến dòng bind 127.0.0.1 thêm vào ip của máy ví dụ
 `bind 127.0.0.1 192.168.40.150`
 
 ## Cấu hình nginx
-`nano /etc/nginx/sites-available/default`
-# ở bên dưới dòng listen [::]:80 default_server; thêm vào nội dung bên dưới và comment tất cả các dòng khác lại
+`nano /etc/nginx/sites-available/default`<br>
+ở bên dưới dòng `listen [::]:80 default_server;` thêm vào nội dung bên dưới và comment tất cả các dòng khác lại
 ```
 	location = /favicon.ico { access_log off; log_not_found off; }
         location /static/ {
