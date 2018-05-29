@@ -1,16 +1,18 @@
-# Deploy 
-Cấu trúc thư mục :
- - /project : `/home/osticket
+# Deploy trên ubuntu 16.0.4
+
+Cấu trúc thư mục : osticket 
+ - /project : `/home/osticket`
  - /static : `/home/osticket/user/static`
  - /media : `/home/media`
 
-## Python 3, type:
+## install requirement (chạy trên quyền root)
 ```
 apt-get update
 apt-get install python3-pip python3-dev nginx python3.5-dev libmysqlclient-dev redis-server
 pip3 install --upgrade pip
 pip install virtualenv
 ```
+*python3.5-dev dành cho python 3.5 nếu version khác thì thay đổi cho phù hợp*
 ## Di chuyển vào thư mục chứa project và tạo môi trường 
 ```
 cd /home/osticket
@@ -19,21 +21,32 @@ virtualenv env
 ## Kích hoạt môi trường và cài đặt những tool cần thiết
 ```
 source env/bin/activate
+
 pip install django gunicorn channels channels_redis simplejson mysqlclient
-```
-## Test gunicorn 
-```
-gunicorn --bind 0.0.0.0:8000 osticket.wsgi
-```
-## Thành công thì thoát khỏi môi trường va tiến hành config 
-```
+
 deactive
 ```
-## Tạo Gunicorn systemd Service File
+## Tạo file `asgi.py` 
+`nano osticket/asgi.py`
+nội dung 
 ```
-nano /etc/systemd/system/gunicorn.service
-#điền vào như bên dưới
--------------------
+"""
+ASGI entrypoint. Configures Django and then runs the application
+defined in the ASGI_APPLICATION setting.
+"""
+
+import os
+import django
+from channels.routing import get_default_application
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "osticket.settings")
+django.setup()
+application = get_default_application()
+```
+## Tạo Gunicorn systemd Service File
+`nano /etc/systemd/system/gunicorn.service`
+nội dung
+```
 [Unit]
 Description=gunicorn daemon
 After=network.target
@@ -46,7 +59,6 @@ ExecStart=/home/osticket/env/bin/gunicorn --access-logfile - --workers 3 --bind 
 
 [Install]
 WantedBy=multi-user.target
--------------------
 ```
 ## Bật gunicorn
 ```
@@ -62,27 +74,11 @@ sudo systemctl status gunicorn
 systemctl daemon-reload
 systemctl restart gunicorn
 ```
-## Tạo file `asgi.py` trong /osticket/osticket/ với nội dung
+## Tạo daphne systemd Service File
+
+`nano /etc/systemd/system/daphne.service`
+nội dung
 ```
-"""
-ASGI entrypoint. Configures Django and then runs the application
-defined in the ASGI_APPLICATION setting.
-"""
-
-import os
-import django
-from channels.routing import get_default_application
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "osticket.settings")
-django.setup()
-application = get_default_application()
-```
-
-## Cấu hình daphne chạy systemd
-```
-nano /etc/systemd/system/daphne.service
-#điền vào 
-
 [Unit]
 Description=My Daphne Service
 After=network.target
@@ -103,20 +99,25 @@ WantedBy=multi-user.target
 systemctl start daphne.service
 systemctl enable daphne.service
 ```
+## Check daphne
+```
+sudo systemctl status daphne
+```
+## nếu chưa `active` chỉnh lại file config và reload 
+```
+systemctl daemon-reload
+systemctl restart daphne
+```
 ## Cấu hình redis-server
-```
-sudo nano /etc/redis/redis.conf
-#tìm đến dòng bind 127.0.0.1 thêm vào ip của máy
-
-bind 127.0.0.1 192.168.40.150
-```
+`sudo nano /etc/redis/redis.conf`
+tìm đến dòng bind 127.0.0.1 thêm vào ip của máy ví dụ
+`bind 127.0.0.1 192.168.40.150`
 
 ## Cấu hình nginx
+`nano /etc/nginx/sites-available/default`
+# ở bên dưới dòng listen [::]:80 default_server; thêm vào nội dung bên dưới và comment tất cả các dòng khác lại
 ```
-nano /etc/nginx/sites-available/default
-# ở bên dưới dòng listen [::]:80 default_server; thêm vào
-
-		location = /favicon.ico { access_log off; log_not_found off; }
+	location = /favicon.ico { access_log off; log_not_found off; }
         location /static/ {
                 root /home/osticket/user;
         }
