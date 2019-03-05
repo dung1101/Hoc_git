@@ -7,6 +7,12 @@ __Git__ là một hệ thống quản lý phiên bản phân tán.Nói một cá
 git config --global user.name "dung1101"
 git config --global user.email "mrbeo1221119@gmail.com"
 ```
+* thiết lập alias
+```
+git config --global alias.aa 'add *'
+git config --global alias.aa 'commit -m'
+git config --global alias.aa 'push origin master'
+```
 ## Kiểm tra cấu hình
 Sau khi cấu hình xong ta có thể xem lại cấu hình bằng cầu lệnh `cat ~/.gitconfig` hoặc `git --list`
 # 4.Làm việc với Git
