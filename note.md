@@ -202,6 +202,11 @@ git tag -d <tag>: del in local
 git push origin --delete <tag>: del in remote
 ```
 
-
+## Move all uncommitted changes to another branch
+```
+git stash push
+git checkout <another_branch>
+git stash apply
+```
 
 
